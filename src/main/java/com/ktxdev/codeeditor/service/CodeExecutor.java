@@ -25,7 +25,8 @@ public class CodeExecutor {
     public static CodeResult execute(Language language, Path path) throws IOException {
         Runtime runtime = Runtime.getRuntime();
 
-        String[] command = {language.getCommand(), path.toAbsolutePath().toString()};
+        String absoluteFilePath = path.toAbsolutePath().toString();
+        String[] command = {language.getCommand(), absoluteFilePath};
 
         Process process = runtime.exec(command);
 
@@ -35,7 +36,10 @@ public class CodeExecutor {
             return new CodeResult(true, result);
         }
 
-        return new CodeResult(false, processResult(process.getErrorStream()));
+        val processResult = processResult(process.getErrorStream());
+
+        String pathToReplace = absoluteFilePath.substring(0, absoluteFilePath.lastIndexOf(path.normalize().toString()));
+        return new CodeResult(false, processResult.replaceAll(pathToReplace, ""));
     }
 
     private static String processResult(InputStream inputStream) throws IOException {
